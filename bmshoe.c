@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-const char SYMBOLS = {'.', '-', '+', '+'};
+const char SYMBOLS[] = {'.', '-', '=', '+'};
 
 int main(int argc, char** argv)
 {
