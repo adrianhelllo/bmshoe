@@ -11,11 +11,13 @@ typedef struct
     int has_val; // 0 or 1
 } optflag;
 
-optflag OPTINFO[] = {
+const optflag OPTINFO[] = {
     {'?', "Lists all available options for the program", 0},
     {'h', "Specifies a desired display height for the image to be shown", 1},
-    {'w', "Specifies a desired display width for the image to be show.", 1},
+    {'w', "Specifies a desired display width for the image to be shown", 1},
 };
+
+const int OPTARR_NUM = sizeof(OPTINFO) / sizeof(OPTINFO[0]);
 
 char *OPTS = ":?w:h:";
 
@@ -27,6 +29,19 @@ int main(int argc, char** argv)
 
     while ((opt = getopt(argc, argv, OPTS)) != -1)
     {
+        for (int i = 0; i < OPTARR_NUM; i++)
+        {
+            if (OPTINFO[i].flagopt == opt && OPTINFO[i].has_val == 1)
+            {
+                printf("%s", optarg);
+                if (optarg[0] == '-' && strcmp(optarg, "--") != 0)
+                {
+                    printf("Expected value for -%c.\n", opt);
+                    return 5;
+                }
+            }
+        }
+
         switch (opt) {
             // An option is missing its value
             case ':':
@@ -37,7 +52,7 @@ int main(int argc, char** argv)
             case '?':
                 if (optopt == '?')
                 {
-                    for (int i = 0, len = sizeof(OPTINFO) / sizeof(OPTINFO[0]); i < len; i++)
+                    for (int i = 0, len = OPTARR_NUM; i < len; i++)
                     {
                         optflag cur_opt = OPTINFO[i];
 
@@ -55,26 +70,24 @@ int main(int argc, char** argv)
                 break;
 
             case 'w':
-                break;
+                
             
             case 'h':
                 break;
 
             // Fallback case
             default:
-                printf("%c\n", opt);
-                printf("Correct usage: ./bmshoe [opt1, opt2, ...] file.bmp. Use the -? option for more information.\n");
+                printf("Correct usage: ./bmshoe [opt1, opt2, ..., --] file.bmp. Use the -? option for more information.\n");
                 return 3;
         }
     }
         
     // Open .bmp file for reading
-    char* f_name = argv[optind - 1];
-    printf("%i", optind);
+    char* f_name = argv[argc - 1];
     FILE* f = fopen(f_name, "r");
     if (f == NULL)
     {
         printf("Could not open %s.", f_name);
-        return 1;
+        return 4;
     }
 }
