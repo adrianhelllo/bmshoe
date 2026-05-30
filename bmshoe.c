@@ -1,26 +1,8 @@
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
+#include "bmpspec.h"
 
 const char SYMBOLS[] = {'.', '-', '=', '+', '%', '&', '#', '@'};
-
-typedef struct
-{
-    char flagopt;
-    char* description;
-    int has_val; // 0 or 1
-} optflag;
-
-const optflag OPTINFO[] = {
-    {'?', "Lists all available options for the program", 0},
-    {'h', "Specifies a desired display height for the image to be shown", 1},
-    {'w', "Specifies a desired display width for the image to be shown", 1},
-};
-
-const int OPTARR_NUM = sizeof(OPTINFO) / sizeof(OPTINFO[0]);
-
-char *OPTS = ":?w:h:";
-
 
 int main(int argc, char** argv)
 {
@@ -28,15 +10,46 @@ int main(int argc, char** argv)
     if (argc != 2)
     {
         printf("Usage: ./bmshoe image.bmp");
-        return 1;        
+        return 1;   
     }
         
     // Open .bmp file for reading
     char* f_name = argv[argc - 1];
-    FILE* f = fopen(f_name, "r");
+    FILE* f = fopen(f_name, "rb");
+
+    // Return if opening the file was unsuccessful
     if (f == NULL)
     {
-        printf("Could not open %s.", f_name);
+        fprintf(stderr, "Error: could not open %s.", f_name);
         return 2;
     }
+
+    // Read file header
+    BITMAPFILEHEADER bmp_fhead;
+    if (fread(&bmp_fhead, sizeof(BITMAPFILEHEADER), 1, f) != 1) {
+        fprintf(stderr, "Error: failed to read BMPFILEHEADER");
+        return 3;
+    }
+
+    // Check for file type
+    if (bmp_fhead.bfType != 0x4d42)
+    {
+        fprintf(stderr,
+            "Error: unrecognised file type (expected 0x424D, got 0x%04X\n",
+            bmp_fhead.bfType);
+        return 4;
+    }
+
+    // Read info header
+    BITMAPINFOHEADER bmp_ihead;
+    if (fread(&bmp_ihead, sizeof(BITMAPINFOHEADER), 1, f) != 1) {
+        fprintf(stderr, "Error: failed to read BITMAPINFOHEADER");
+        return 5;
+    }
+
+    
+
+    fclose(f);
+
+    return 0;
 }
