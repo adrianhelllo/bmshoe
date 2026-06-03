@@ -3,6 +3,7 @@
 #include "bmpspec.h"
 
 const char SYMBOLS[] = {'.', '-', '=', '+', '%', '&', '#', '@'};
+const int RENDER_WIDTH = 50;
 
 int main(int argc, char** argv)
 {
@@ -64,9 +65,30 @@ int main(int argc, char** argv)
     }
 
     // Calculate new pixel values
-    for (int i = 0; i < WIDTH; i++)
+    float rescale = RENDER_WIDTH / WIDTH;
+    int subsel_len = WIDTH / (RENDER_WIDTH * rescale);
+    RGBTRIPLE rescaled[(int) (HEIGHT * rescale)][RENDER_WIDTH];
+    for (int i = 0; i < HEIGHT; i++)
     {
-        
+        for (int j = 0; j < WIDTH; j += subsel_len)
+        {
+            RGBTRIPLE spx = img_arr[i][j];
+            RGBTRIPLE new;
+            uint8_t r_sum, g_sum, b_sum;
+
+            for (int subs = 0; subs < subsel_len; subs++)
+            {
+                r_sum += img_arr[i][j+subs].rgbtRed;
+                g_sum += img_arr[i][j+subs].rgbtGreen;
+                b_sum += img_arr[i][j+subs].rgbtBlue;
+            }
+
+            new.rgbtRed = r_sum / subsel_len; 
+            new.rgbtGreen = g_sum / subsel_len; 
+            new.rgbtBlue = b_sum / subsel_len;
+
+            rescaled[i][j] = new;
+        }
     }
 
     fclose(f);
