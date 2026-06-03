@@ -25,3 +25,10 @@ typedef struct
   uint32_t biClrUsed;
   uint32_t biClrImportant;
 } __attribute__((packed)) BITMAPINFOHEADER;
+
+typedef struct
+{
+  uint8_t rgbtRed;
+  uint8_t rgbtGreen;
+  uint8_t rgbtBlue;
+} RGBTRIPLE;

@@ -42,12 +42,32 @@ int main(int argc, char** argv)
 
     // Read info header
     BITMAPINFOHEADER bmp_ihead;
-    if (fread(&bmp_ihead, sizeof(BITMAPINFOHEADER), 1, f) != 1) {
+    if (fread(&bmp_ihead, sizeof(BITMAPINFOHEADER), 1, f) != 1)
+    {
         fprintf(stderr, "Error: failed to read BITMAPINFOHEADER");
         return 5;
     }
 
-    
+    // Initialise array for image
+    const int HEIGHT = bmp_ihead.biHeight;
+    const int WIDTH = bmp_ihead.biWidth;
+    RGBTRIPLE img_arr[HEIGHT][WIDTH];
+
+    // Go to beginning of image data
+    fseek(f, 0, bmp_fhead.bfOffBits);
+
+    // Read image data
+    int i = 0;
+    while (fread(&img_arr[i], sizeof(RGBTRIPLE), 1, f) == 1)
+    {
+        i++;
+    }
+
+    // Calculate new pixel values
+    for (int i = 0; i < WIDTH; i++)
+    {
+        
+    }
 
     fclose(f);
 
