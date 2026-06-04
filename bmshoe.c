@@ -66,27 +66,19 @@ int main(int argc, char** argv)
 
     // Rescale image content
     float rescale_f = RENDER_WIDTH / WIDTH;
-    int map_size =  1 / rescale_f;
+    int map_size =  1 / rescale_f; // Floored
     RGBTRIPLE rescaled[RENDER_WIDTH * ((int) (HEIGHT * rescale_f))];
 
-    for (int i = 0; i < HEIGHT; i++)
+    for (int i = 0; i < (int) ((HEIGHT * rescale_f) / map_size + 1); i++)
     {
-        int r_sum = 0, g_sum = 0, b_sum = 0;
-        for (int j = 0; j < WIDTH; j++)
+        for (int j = 0; j < (int) (RENDER_WIDTH / map_size + 1); j++)
         {
-            if (j % map_size == map_size - 1)
+            for (int y = 0; y < map_size; y++)
             {
-                uint8_t r_avg = r_sum / map_size;
-                uint8_t g_avg = g_sum / map_size;
-                uint8_t b_avg = b_sum / map_size;
-
-                rescaled[(j + 1) / map_size] = (RGBTRIPLE) {r_avg, g_avg, b_avg};
-            }
-            else
-            {
-                r_sum += img_arr[i * j].rgbtRed;
-                g_sum += img_arr[i * j].rgbtGreen;
-                b_sum += img_arr[i * j].rgbtBlue;
+                for (int x = 0; x < map_size; x++)
+                {
+                    
+                }
             }
         }
     }
