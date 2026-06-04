@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     // Initialise array for image
     const int HEIGHT = bmp_ihead.biHeight;
     const int WIDTH = bmp_ihead.biWidth;
-    RGBTRIPLE img_arr[HEIGHT][WIDTH];
+    RGBTRIPLE img_arr[HEIGHT * WIDTH];
 
     // Go to beginning of image data
     fseek(f, 0, bmp_fhead.bfOffBits);
@@ -64,30 +64,30 @@ int main(int argc, char** argv)
         i++;
     }
 
-    // Calculate new pixel values
-    float rescale = RENDER_WIDTH / WIDTH;
-    int subsel_len = WIDTH / (RENDER_WIDTH * rescale);
-    RGBTRIPLE rescaled[(int) (HEIGHT * rescale)][RENDER_WIDTH];
+    // Rescale image content
+    float rescale_f = RENDER_WIDTH / WIDTH;
+    int map_size =  1 / rescale_f;
+    RGBTRIPLE rescaled[RENDER_WIDTH * ((int) (HEIGHT * rescale_f))];
+
     for (int i = 0; i < HEIGHT; i++)
     {
-        for (int j = 0; j < WIDTH; j += subsel_len)
+        int r_sum = 0, g_sum = 0, b_sum = 0;
+        for (int j = 0; j < WIDTH; j++)
         {
-            RGBTRIPLE spx = img_arr[i][j];
-            RGBTRIPLE new;
-            uint8_t r_sum, g_sum, b_sum;
-
-            for (int subs = 0; subs < subsel_len; subs++)
+            if (j % map_size == map_size - 1)
             {
-                r_sum += img_arr[i][j+subs].rgbtRed;
-                g_sum += img_arr[i][j+subs].rgbtGreen;
-                b_sum += img_arr[i][j+subs].rgbtBlue;
+                uint8_t r_avg = r_sum / map_size;
+                uint8_t g_avg = g_sum / map_size;
+                uint8_t b_avg = b_sum / map_size;
+
+                rescaled[(j + 1) / map_size] = (RGBTRIPLE) {r_avg, g_avg, b_avg};
             }
-
-            new.rgbtRed = r_sum / subsel_len; 
-            new.rgbtGreen = g_sum / subsel_len; 
-            new.rgbtBlue = b_sum / subsel_len;
-
-            rescaled[i][j] = new;
+            else
+            {
+                r_sum += img_arr[i * j].rgbtRed;
+                g_sum += img_arr[i * j].rgbtGreen;
+                b_sum += img_arr[i * j].rgbtBlue;
+            }
         }
     }
 
