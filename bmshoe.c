@@ -66,24 +66,23 @@ int main(int argc, char** argv)
 
     // Rescale image content
     float rescale_f = RENDER_WIDTH / WIDTH;
-    int map_size =  1 / rescale_f; // Floored
-    RGBTRIPLE rescaled[RENDER_WIDTH * ((int) (HEIGHT * rescale_f))];
+    const int RENDER_HEIGHT = (int) (HEIGHT * rescale_f);
+    RGBTRIPLE rescaled[RENDER_WIDTH * RENDER_HEIGHT];
 
-    for (int i = 0; i < (int) ((HEIGHT * rescale_f) / map_size + 1); i++)
+    float or_x, or_y
+    for (int i = 0; i < RENDER_HEIGHT; i++)
     {
-        for (int j = 0; j < (int) (RENDER_WIDTH / map_size + 1); j++)
+        for (int j = 0; j < RENDER_WIDTH; j++)
         {
-            for (int y = 0; y < map_size; y++)
-            {
-                for (int x = 0; x < map_size; x++)
-                {
-                    
-                }
-            }
+            // Find where output pixel position maps to in original image by undoing scaling
+            // Position of output px x';y' maps to position or_x;or_y on original img
+            or_x = (RENDER_WIDTH + 0.5) * (WIDTH / RENDER_WIDTH);
+            or_y = (RENDER_HEIGHT + 0.5) * (HEIGHT / RENDER_HEIGHT);
+
+            // Bilinearly interpolate to sample color
+            
         }
     }
 
     fclose(f);
-
     return 0;
-}
