@@ -6,6 +6,7 @@ float lerp(x, x1, v1, x2, v2);
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos);
 
 const char SYMBOLS[] = {'.', '-', '=', '+', '%', '&', '#', '@'};
+const int N = sizeof(SYMBOLS) / sizeof(SYMBOLS[0]);
 const int RENDER_WIDTH = 50;
 
 int main(int argc, char** argv)
@@ -101,7 +102,19 @@ int main(int argc, char** argv)
     }
 
     // Render image in terminal using text characters
-    for (int i = 0;)
+    int avg, br;
+    for (int i = 0; i < RENDER_HEIGHT; i++)
+    {
+        for (int j = 0; j < RENDER_WIDTH; j++)
+        {
+            avg = (int) ((rescaled[i * RENDER_WIDTH + j].rgbtRed + 
+                          rescaled[i * RENDER_WIDTH + j].rgbtGreen + 
+                          rescaled[i * RENDER_WIDTH + j].rgbtBlue)/3);
+
+            // Calculate brightness index          
+            br = (int) ((avg * N) / 256);
+        }
+    }
 
 
     fclose(f);
