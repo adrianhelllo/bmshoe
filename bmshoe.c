@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     if (bmp_fhead.bfType != 0x4d42)
     {
         fprintf(stderr,
-            "Error: unrecognised file type (expected 0x424D, got 0x%04X\n",
+            "Error: unrecognised file type (expected 0x424D, got 0x%04X)\n",
             bmp_fhead.bfType);
         return 4;
     }
@@ -54,6 +54,13 @@ int main(int argc, char** argv)
         return 5;
     }
 
+    if (bmp_ihead.biBitCount != 0x1800)
+    {
+        fprintf(stderr, "Error: No support for bit count (expected 0x1800, got 0x%04X)\n",
+        bmp_ihead.biBitCount);
+        return 6;
+    }
+
     // Initialise array for image
     const int HEIGHT = bmp_ihead.biHeight;
     const int WIDTH = bmp_ihead.biWidth;
@@ -63,10 +70,16 @@ int main(int argc, char** argv)
     fseek(f, 0, bmp_fhead.bfOffBits);
 
     // Read image data
-    int i = 0;
-    while (fread(&img_arr[i], sizeof(RGBTRIPLE), 1, f) == 1)
+    int pad = sizeof(RGBTRIPLE) % 4;
+    for (int i = 0; i < HEIGHT; i++)
     {
-        i++;
+        for (int j = 0; j < WIDTH; j++)
+        {
+            fread(&img_arr[i * WIDTH + j], sizeof(RGBTRIPLE), 1, f);
+        }
+
+        // Skip padding
+        fseek(f, pad, SEEK_CUR);
     }
 
     // Rescale image content
