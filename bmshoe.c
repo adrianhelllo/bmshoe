@@ -2,10 +2,11 @@
 #include <string.h>
 #include "bmpspec.h"
 
-float lerp(x, x1, v1, x2, v2);
+float lerp(float x, int x1, int v1, int x2, int v2);
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos);
 
 const char SYMBOLS[] = {'.', '-', '=', '+', '%', '&', '#', '@'};
+const char* PREFIX = "\x1b[38;2;";
 const int N = sizeof(SYMBOLS) / sizeof(SYMBOLS[0]);
 const int RENDER_WIDTH = 50;
 
@@ -102,22 +103,25 @@ int main(int argc, char** argv)
     }
 
     // Render image in terminal using text characters
+    RGBTRIPLE cur;
     int avg, br;
     for (int i = 0; i < RENDER_HEIGHT; i++)
     {
         for (int j = 0; j < RENDER_WIDTH; j++)
         {
-            avg = (int) ((rescaled[i * RENDER_WIDTH + j].rgbtRed + 
-                          rescaled[i * RENDER_WIDTH + j].rgbtGreen + 
-                          rescaled[i * RENDER_WIDTH + j].rgbtBlue)/3);
+            cur = rescaled[i * RENDER_WIDTH + j];
+            avg = (int) ((cur.rgbtRed + cur.rgbtGreen + cur.rgbtBlue)/3);
 
             // Calculate brightness index          
             br = (int) ((avg * N) / 256);
+            
+            // Render pixel
+            printf("%s%i;%i;%im%c",
+                   PREFIX, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, SYMBOLS[br]);
         }
     }
-
-
     fclose(f);
+    printf("\x1b[0m"); // Reset terminal color
     return 0;
 }
 
