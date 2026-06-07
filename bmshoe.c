@@ -2,6 +2,9 @@
 #include <string.h>
 #include "bmpspec.h"
 
+float lerp(x, x1, v1, x2, v2);
+RGBTRIPLE lerp_px(float pos_x, float pos_y, RGBTRIPLE img[], int img_w);
+
 const char SYMBOLS[] = {'.', '-', '=', '+', '%', '&', '#', '@'};
 const int RENDER_WIDTH = 50;
 
@@ -69,7 +72,9 @@ int main(int argc, char** argv)
     const int RENDER_HEIGHT = (int) (HEIGHT * rescale_f);
     RGBTRIPLE rescaled[RENDER_WIDTH * RENDER_HEIGHT];
 
-    float or_x, or_y
+    RGBTRIPLE lerp1, lerp2;
+    float or_x, or_y, t;
+    int x1, x2, row;
     for (int i = 0; i < RENDER_HEIGHT; i++)
     {
         for (int j = 0; j < RENDER_WIDTH; j++)
@@ -80,9 +85,32 @@ int main(int argc, char** argv)
             or_y = (RENDER_HEIGHT + 0.5) * (HEIGHT / RENDER_HEIGHT);
 
             // Bilinearly interpolate to sample color
-            
+            lerp1 = lerp_px(or_x, or_y, img_arr, WIDTH);
+            lerp2 = lerp_px(or_x, or_y + 1, img_arr, WIDTH);
+
+            rescaled[i * RENDER_WIDTH + j] = lerp_px(or_x, or_y, img_arr, WIDTH);
         }
     }
 
     fclose(f);
     return 0;
+}
+
+// Performs linear interpolation between x1 and x2
+float lerp(float x, int x1, int v1, int x2, int v2)
+{
+    int t = (x-x1)/(x2-x1);
+    return v1*(1-t) + v2*t;
+}
+
+RGBTRIPLE lerp_px(float pos_x, float pos_y, RGBTRIPLE img[], int img_w)
+{
+    int x1 = (int) pos_x, x2 = (int) (pos_x + 1);
+    int r = (int) pos_y;
+
+    return (RGBTRIPLE) {
+        lerp(pos_x, x1, img[r * img_w + x1].rgbtRed, x2, img[r * img_w + x2].rgbtRed),
+        lerp(pos_x, x1, img[r * img_w + x1].rgbtRed, x2, img[r * img_w + x2].rgbtRed),
+        lerp(pos_x, x1, img[r * img_w + x1].rgbtRed, x2, img[r * img_w + x2].rgbtRed),
+    }
+}
