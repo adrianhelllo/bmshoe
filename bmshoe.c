@@ -58,7 +58,6 @@ int main(int argc, char** argv)
     if (bmp_ihead.biSize != sizeof(BITMAPINFOHEADER))
     {
         fread(&buffer, bmp_ihead.biSize - sizeof(BITMAPINFOHEADER), 1, f);
-        printf("%");
     }
 
     // Ensure 24 bits / pixel
@@ -97,10 +96,9 @@ int main(int argc, char** argv)
     RGBTRIPLE rescaled[RENDER_WIDTH * RENDER_HEIGHT];
 
     // Initialise loop variables
-    printf("width: %i\nrescale: %f\nrheight: %i", WIDTH, rescale_f, RENDER_HEIGHT);
+    printf("width: %i\nrescale: %f\nrheight: %i\n", WIDTH, rescale_f, RENDER_HEIGHT);
     RGBTRIPLE r1, r2, q11, q21, q12, q22;
     float or_x, or_y, tx, ty;
-    int x1, x2, row;
 
     for (int i = 0; i < RENDER_HEIGHT; i++)
     {
@@ -108,21 +106,24 @@ int main(int argc, char** argv)
         {
             // Find where output pixel position maps to in original image by undoing scaling
             // Position of output pixel x';y' maps to position or_x;or_y on original img
-            or_x = (RENDER_WIDTH + 0.5) * (WIDTH / RENDER_WIDTH), tx = or_x - (int) or_x;
-            or_y = (RENDER_HEIGHT + 0.5) * (HEIGHT / RENDER_HEIGHT), ty = or_y - (int) or_y;
-
+            or_x = j * (RENDER_WIDTH + 0.5) * (WIDTH / RENDER_WIDTH), tx = or_x - (int) or_x;
+            or_y = i * (RENDER_HEIGHT + 0.5) * (HEIGHT / RENDER_HEIGHT), ty = or_y - (int) or_y;
+            
             q11 = img_arr[(int) or_y * WIDTH + (int) or_x],
             q21 = img_arr[(int) or_y * WIDTH + (int) (or_x + 1)], 
             q12 = img_arr[(int) (or_y + 1) * WIDTH + (int) or_x],
             q22 = img_arr[(int) (or_y + 1) * WIDTH + (int) (or_x + 1)];
+            printf("hello start");
 
             // Bilinearly interpolate to sample color
+            printf("aashvjvf");
             r1 = lerp_px(q11, q21, tx);
             r2 = lerp_px(q12, q22, tx);
 
             // Set new pixel value
-            rescaled[i * RENDER_WIDTH + j] = lerp_px(r1, r2, ty);
-            printf("new pixel %i %i\n", i, j);
+            RGBTRIPLE this = lerp_px(r1, r2, ty);
+            rescaled[i * RENDER_WIDTH + j] = this;
+            printf("new pixel %i %i - %i, %i, %i\n", i, j, this.rgbtRed,this.rgbtGreen,this.rgbtBlue);
         }
     }
 
@@ -140,7 +141,8 @@ int main(int argc, char** argv)
             br = (int) ((avg * N) / 256);
             
             // Render pixel
-            printf("%s%i;%i;%im%c",
+            printf("arr %i,%i - %i %i %i",i,j, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue);
+            printf("%s%i;%i;%im%c\n",
                    PREFIX, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, SYMBOLS[br]);
         }
         printf("\n");
@@ -163,6 +165,6 @@ RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos)
     {
         lerp(pos, 0, px1.rgbtRed, 1, px2.rgbtRed),
         lerp(pos, 0, px1.rgbtGreen, 1, px2.rgbtGreen),
-        lerp(pos, 0, px1.rgbtBlue,1, px2.rgbtBlue)
+        lerp(pos, 0, px1.rgbtBlue, 1, px2.rgbtBlue)
     };
 }
