@@ -48,17 +48,24 @@ int main(int argc, char** argv)
 
     // Read info header
     BITMAPINFOHEADER bmp_ihead;
+    uint8_t buffer[84]; // Largest possible number of buffered bytes
     if (fread(&bmp_ihead, sizeof(BITMAPINFOHEADER), 1, f) != 1)
     {
         fprintf(stderr, "Error: failed to read BITMAPINFOHEADER");
         return 5;
     }
 
-    if (bmp_ihead.biBitCount != 0x1800)
+    if (bmp_ihead.biSize != sizeof(DIBHEADER))
     {
-        fprintf(stderr, "Error: No support for bit count (expected 0x1800, got 0x%04X)\n",
+        fread(&buffer, bmp_ihead.biSize - sizeof(DIBHEADER), 1, f);
+    }
+
+    // Ensure 24 bits / pixel
+    if (bmp_ihead.biBitCount != 0x0018)
+    {
+        fprintf(stderr, "Error: No support for bit count (expected 0x0018, got 0x%04X)\n",
         bmp_ihead.biBitCount);
-        return 6;
+        return 7;
     }
 
     // Initialise array for image
