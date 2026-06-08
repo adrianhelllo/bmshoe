@@ -55,9 +55,10 @@ int main(int argc, char** argv)
         return 5;
     }
 
-    if (bmp_ihead.biSize != sizeof(DIBHEADER))
+    if (bmp_ihead.biSize != sizeof(BITMAPINFOHEADER))
     {
-        fread(&buffer, bmp_ihead.biSize - sizeof(DIBHEADER), 1, f);
+        fread(&buffer, bmp_ihead.biSize - sizeof(BITMAPINFOHEADER), 1, f);
+        printf("%");
     }
 
     // Ensure 24 bits / pixel
@@ -82,6 +83,7 @@ int main(int argc, char** argv)
     {
         for (int j = 0; j < WIDTH; j++)
         {
+            printf("%i %i\n", i, j);
             fread(&img_arr[i * WIDTH + j], sizeof(RGBTRIPLE), 1, f);
         }
 
@@ -90,11 +92,12 @@ int main(int argc, char** argv)
     }
 
     // Rescale image content
-    float rescale_f = RENDER_WIDTH / WIDTH;
+    const float rescale_f = RENDER_WIDTH / (float) WIDTH;
     const int RENDER_HEIGHT = (int) (HEIGHT * rescale_f);
     RGBTRIPLE rescaled[RENDER_WIDTH * RENDER_HEIGHT];
 
     // Initialise loop variables
+    printf("width: %i\nrescale: %f\nrheight: %i", WIDTH, rescale_f, RENDER_HEIGHT);
     RGBTRIPLE r1, r2, q11, q21, q12, q22;
     float or_x, or_y, tx, ty;
     int x1, x2, row;
@@ -119,6 +122,7 @@ int main(int argc, char** argv)
 
             // Set new pixel value
             rescaled[i * RENDER_WIDTH + j] = lerp_px(r1, r2, ty);
+            printf("new pixel %i %i\n", i, j);
         }
     }
 
@@ -139,6 +143,7 @@ int main(int argc, char** argv)
             printf("%s%i;%i;%im%c",
                    PREFIX, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, SYMBOLS[br]);
         }
+        printf("\n");
     }
     fclose(f);
     printf("\x1b[0m"); // Reset terminal color
