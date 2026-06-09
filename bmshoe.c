@@ -5,8 +5,8 @@
 float lerp(float x, int x1, int v1, int x2, int v2);
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos);
 
-const char SYMBOLS[] = {'.', '-', '=', '+', '%', '&', '#', '@'};
-const char* PREFIX = "\x1b[38;2;";
+const char SYMBOLS[] = {'.',':','-','=','+','*','#','%','@'};
+const char* PREFIX = "\x1b[48;2;";
 const int N = sizeof(SYMBOLS) / sizeof(SYMBOLS[0]);
 const int RENDER_WIDTH = 50;
 
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
     {
         for (int j = 0; j < WIDTH; j++)
         {
-            printf("%i %i\n", i, j);
+            // printf("%i %i\n", i, j);
             fread(&img_arr[i * WIDTH + j], sizeof(RGBTRIPLE), 1, f);
         }
 
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
     RGBTRIPLE rescaled[RENDER_WIDTH * RENDER_HEIGHT];
 
     // Initialise loop variables
-    printf("width: %i\nrescale: %f\nrheight: %i\n", WIDTH, rescale_f, RENDER_HEIGHT);
+    // printf("width: %i\nrescale: %f\nrheight: %i\n", WIDTH, rescale_f, RENDER_HEIGHT);
     RGBTRIPLE r1, r2, q11, q21, q12, q22;
     float or_x, or_y, tx, ty;
 
@@ -107,43 +107,42 @@ int main(int argc, char** argv)
         {
             // Find where output pixel position maps to in original image by undoing scaling
             // Position of output pixel x';y' maps to position or_x;or_y on original img
-            printf("debug 1 - %i %i", i, j);
-            or_x = (j + 0.5) * (WIDTH / RENDER_WIDTH), tx = or_x - (int) or_x;
-            or_y = (i + 0.5) * (HEIGHT / RENDER_HEIGHT), ty = or_y - (int) or_y;
+            or_x = (j + 0.5) * (WIDTH / RENDER_WIDTH), tx = or_x - (int) or_x + 0.5;
+            or_y = (i + 0.5) * (HEIGHT / RENDER_HEIGHT), ty = or_y - (int) or_y + 0.5;
             
             q11 = img_arr[(int) or_y * WIDTH + (int) or_x],
             q21 = img_arr[(int) or_y * WIDTH + (int) (or_x + 1)], 
             q12 = img_arr[(int) (or_y + 1) * WIDTH + (int) or_x],
             q22 = img_arr[(int) (or_y + 1) * WIDTH + (int) (or_x + 1)];
-            printf("debug 2 - %i %i", i, j);
 
             // Bilinearly interpolate to sample color
+            printf("Horizontal lerp: %i %i\n", i, j);
             r1 = lerp_px(q11, q21, tx);
             r2 = lerp_px(q12, q22, tx);
 
             // Set new pixel value
+            printf("Vertical lerp: %i %i\n", i, j);
             RGBTRIPLE this = lerp_px(r1, r2, ty);
             rescaled[i * RENDER_WIDTH + j] = this;
-            printf("new pixel %i %i - %i, %i, %i\n", i, j, this.rgbtRed,this.rgbtGreen,this.rgbtBlue);
         }
     }
 
     // Render image in terminal using text characters
     RGBTRIPLE cur;
     int avg, br;
+    printf("\x1b[1m");
     for (int i = 0; i < RENDER_HEIGHT; i++)
     {
         for (int j = 0; j < RENDER_WIDTH; j++)
         {
-            cur = rescaled[i * RENDER_WIDTH + j];
+            cur = rescaled[(RENDER_HEIGHT - i) * RENDER_WIDTH + j];
             avg = (int) ((cur.rgbtRed + cur.rgbtGreen + cur.rgbtBlue)/3);
 
             // Calculate brightness index          
             br = (int) ((avg * N) / 256);
             
             // Render pixel
-            printf("arr %i,%i - %i %i %i",i,j, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue);
-            printf("%s%i;%i;%im%c\n",
+            printf("%s%i;%i;%im%c ",
                    PREFIX, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, SYMBOLS[br]);
         }
         printf("\n");
@@ -156,12 +155,15 @@ int main(int argc, char** argv)
 // Performs linear interpolation between x1 and x2
 float lerp(float x, int x1, int v1, int x2, int v2)
 {
-    int t = (x-x1)/(x2-x1);
+    float t = (x-x1)/(x2-x1);
     return v1*(1-t) + v2*t;
 }
 
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos)
 {
+    printf("%s%i;%i;%imPX1: %i, %i, %i\x1b[0m |||||| ", PREFIX, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue);
+    printf("%s%i;%i;%imPX2: %i, %i, %i\x1b[0m\n", PREFIX, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue);
+
     return (RGBTRIPLE)
     {
         lerp(pos, 0, px1.rgbtRed, 1, px2.rgbtRed),
