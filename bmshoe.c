@@ -55,6 +55,7 @@ int main(int argc, char** argv)
         return 5;
     }
 
+    // Buffer extra bytes in case DIBHEADER isn't using BITMAPINFOHEADER
     if (bmp_ihead.biSize != sizeof(BITMAPINFOHEADER))
     {
         fread(&buffer, bmp_ihead.biSize - sizeof(BITMAPINFOHEADER), 1, f);
@@ -106,17 +107,17 @@ int main(int argc, char** argv)
         {
             // Find where output pixel position maps to in original image by undoing scaling
             // Position of output pixel x';y' maps to position or_x;or_y on original img
-            or_x = j * (RENDER_WIDTH + 0.5) * (WIDTH / RENDER_WIDTH), tx = or_x - (int) or_x;
-            or_y = i * (RENDER_HEIGHT + 0.5) * (HEIGHT / RENDER_HEIGHT), ty = or_y - (int) or_y;
+            printf("debug 1 - %i %i", i, j);
+            or_x = (j + 0.5) * (WIDTH / RENDER_WIDTH), tx = or_x - (int) or_x;
+            or_y = (i + 0.5) * (HEIGHT / RENDER_HEIGHT), ty = or_y - (int) or_y;
             
             q11 = img_arr[(int) or_y * WIDTH + (int) or_x],
             q21 = img_arr[(int) or_y * WIDTH + (int) (or_x + 1)], 
             q12 = img_arr[(int) (or_y + 1) * WIDTH + (int) or_x],
             q22 = img_arr[(int) (or_y + 1) * WIDTH + (int) (or_x + 1)];
-            printf("hello start");
+            printf("debug 2 - %i %i", i, j);
 
             // Bilinearly interpolate to sample color
-            printf("aashvjvf");
             r1 = lerp_px(q11, q21, tx);
             r2 = lerp_px(q12, q22, tx);
 
