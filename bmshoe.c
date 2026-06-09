@@ -78,13 +78,16 @@ int main(int argc, char** argv)
     fseek(f, 0, bmp_fhead.bfOffBits);
 
     // Read image data
-    int pad = sizeof(RGBTRIPLE) % 4;
+    int pad = (4 - (sizeof(RGBTRIPLE) * WIDTH) % 4) % 4;
     for (int i = 0; i < HEIGHT; i++)
     {
         for (int j = 0; j < WIDTH; j++)
         {
             // printf("%i %i\n", i, j);
-            fread(&img_arr[i * WIDTH + j], sizeof(RGBTRIPLE), 1, f);
+            RGBTRIPLE cur;
+            fread(&cur, sizeof(RGBTRIPLE), 1, f);
+            printf("%s%i;%i;%imREAD %i %i - %i, %i, %i\n", PREFIX, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, i, j, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue);
+            img_arr[i * WIDTH + j] = cur;
         }
 
         // Skip padding
@@ -116,12 +119,12 @@ int main(int argc, char** argv)
             q22 = img_arr[(int) (or_y + 1) * WIDTH + (int) (or_x + 1)];
 
             // Bilinearly interpolate to sample color
-            printf("Horizontal lerp: %i %i\n", i, j);
+            // printf("Horizontal lerp: %i %i\n", i, j);
             r1 = lerp_px(q11, q21, tx);
             r2 = lerp_px(q12, q22, tx);
 
             // Set new pixel value
-            printf("Vertical lerp: %i %i\n", i, j);
+            // printf("Vertical lerp: %i %i\n", i, j);
             RGBTRIPLE this = lerp_px(r1, r2, ty);
             rescaled[i * RENDER_WIDTH + j] = this;
         }
@@ -145,7 +148,7 @@ int main(int argc, char** argv)
             printf("%s%i;%i;%im%c ",
                    PREFIX, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, SYMBOLS[br]);
         }
-        printf("\n");
+        printf("\x1b[0m\n");
     }
     fclose(f);
     printf("\x1b[0m"); // Reset terminal color
@@ -161,8 +164,8 @@ float lerp(float x, int x1, int v1, int x2, int v2)
 
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos)
 {
-    printf("%s%i;%i;%imPX1: %i, %i, %i\x1b[0m |||||| ", PREFIX, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue);
-    printf("%s%i;%i;%imPX2: %i, %i, %i\x1b[0m\n", PREFIX, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue);
+    // printf("%s%i;%i;%imPX1: %i, %i, %i\x1b[0m |||||| ", PREFIX, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue);
+    // printf("%s%i;%i;%imPX2: %i, %i, %i\x1b[0m\n", PREFIX, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue);
 
     return (RGBTRIPLE)
     {

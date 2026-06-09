@@ -14,8 +14,8 @@ typedef struct
 typedef struct
 {
   uint32_t biSize;
-  int16_t  biWidth;
-  int16_t  biHeight;
+  int32_t  biWidth;
+  int32_t  biHeight;
   uint16_t biPlanes;
   uint16_t biBitCount;
   uint32_t biCompression;
@@ -28,7 +28,7 @@ typedef struct
 
 typedef struct
 {
-  uint8_t rgbtRed;
-  uint8_t rgbtGreen;
   uint8_t rgbtBlue;
-} RGBTRIPLE;
+  uint8_t rgbtGreen;
+  uint8_t rgbtRed;
+} __attribute__((packed)) RGBTRIPLE;
