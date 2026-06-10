@@ -6,9 +6,11 @@ float lerp(float x, int x1, int v1, int x2, int v2);
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos);
 
 const char SYMBOLS[] = {'.',':','-','=','+','*','#','%','@'};
-const char* PREFIX = "\x1b[48;2;";
+const char* CLR = "\x1b[38;2;";
+const char* BOLD = "\x1b[1m";
+const char* CLEAR = "\x1b[0m";
 const int N = sizeof(SYMBOLS) / sizeof(SYMBOLS[0]);
-const int RENDER_WIDTH = 50;
+const int RENDER_WIDTH = 100;
 
 int main(int argc, char** argv)
 {
@@ -86,9 +88,10 @@ int main(int argc, char** argv)
             // printf("%i %i\n", i, j);
             RGBTRIPLE cur;
             fread(&cur, sizeof(RGBTRIPLE), 1, f);
-            printf("%s%i;%i;%imREAD %i %i - %i, %i, %i\n", PREFIX, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, i, j, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue);
             img_arr[i * WIDTH + j] = cur;
         }
+        // RGBTRIPLE cur = img_arr[i * WIDTH];
+        // printf("%s%i;%i;%imREAD %i 0 - %i, %i, %i\n", CLR, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, i, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue);
 
         // Skip padding
         fseek(f, pad, SEEK_CUR);
@@ -99,11 +102,20 @@ int main(int argc, char** argv)
     const int RENDER_HEIGHT = (int) (HEIGHT * rescale_f);
     RGBTRIPLE rescaled[RENDER_WIDTH * RENDER_HEIGHT];
 
+    for (int i = 0; i < RENDER_HEIGHT; i++)
+    {
+        for (int j = 0; j < RENDER_WIDTH; j++)
+        {
+            rescaled[i * RENDER_WIDTH + j] = (RGBTRIPLE) {0, 0, 0};
+        }
+    }
+
     // Initialise loop variables
     // printf("width: %i\nrescale: %f\nrheight: %i\n", WIDTH, rescale_f, RENDER_HEIGHT);
     RGBTRIPLE r1, r2, q11, q21, q12, q22;
     float or_x, or_y, tx, ty;
 
+    // Perform interpolation
     for (int i = 0; i < RENDER_HEIGHT; i++)
     {
         for (int j = 0; j < RENDER_WIDTH; j++)
@@ -119,12 +131,10 @@ int main(int argc, char** argv)
             q22 = img_arr[(int) (or_y + 1) * WIDTH + (int) (or_x + 1)];
 
             // Bilinearly interpolate to sample color
-            // printf("Horizontal lerp: %i %i\n", i, j);
             r1 = lerp_px(q11, q21, tx);
             r2 = lerp_px(q12, q22, tx);
 
             // Set new pixel value
-            // printf("Vertical lerp: %i %i\n", i, j);
             RGBTRIPLE this = lerp_px(r1, r2, ty);
             rescaled[i * RENDER_WIDTH + j] = this;
         }
@@ -133,25 +143,23 @@ int main(int argc, char** argv)
     // Render image in terminal using text characters
     RGBTRIPLE cur;
     int avg, br;
-    printf("\x1b[1m");
     for (int i = 0; i < RENDER_HEIGHT; i++)
     {
         for (int j = 0; j < RENDER_WIDTH; j++)
         {
-            cur = rescaled[(RENDER_HEIGHT - i) * RENDER_WIDTH + j];
+            cur = rescaled[(RENDER_HEIGHT - 1 - i) * RENDER_WIDTH + j]; // Image data is stored in little-endian
             avg = (int) ((cur.rgbtRed + cur.rgbtGreen + cur.rgbtBlue)/3);
 
             // Calculate brightness index          
             br = (int) ((avg * N) / 256);
             
             // Render pixel
-            printf("%s%i;%i;%im%c ",
-                   PREFIX, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, SYMBOLS[br]);
+            printf("%s%i;%i;%im%s%c ",
+                   CLR, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, BOLD, SYMBOLS[br]);
         }
-        printf("\x1b[0m\n");
+        printf("%s\n", CLEAR);
     }
     fclose(f);
-    printf("\x1b[0m"); // Reset terminal color
     return 0;
 }
 
@@ -164,8 +172,8 @@ float lerp(float x, int x1, int v1, int x2, int v2)
 
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos)
 {
-    // printf("%s%i;%i;%imPX1: %i, %i, %i\x1b[0m |||||| ", PREFIX, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue);
-    // printf("%s%i;%i;%imPX2: %i, %i, %i\x1b[0m\n", PREFIX, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue);
+    printf("%s%i;%i;%imPX1: %i, %i, %i\x1b[0m |||||| ", CLR, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue);
+    printf("%s%i;%i;%imPX2: %i, %i, %i\x1b[0m\n", CLR, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue);
 
     return (RGBTRIPLE)
     {
