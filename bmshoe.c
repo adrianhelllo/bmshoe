@@ -2,7 +2,7 @@
 #include <string.h>
 #include "bmpspec.h"
 
-float lerp(float x, int x1, int v1, int x2, int v2);
+float lerp(float x, float x1, int v1, float x2, int v2);
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos);
 
 const char SYMBOLS[] = {'.',':','-','=','+','*','#','%','@'};
@@ -13,7 +13,7 @@ const char* BG = "\x1b[48;2;0;0;0m";
 const char* BOLD = "\x1b[1m";
 const char* CLEAR = "\x1b[0m";
 
-const int RENDER_WIDTH = 100;
+const int RENDER_WIDTH = 130;
 
 int main(int argc, char** argv)
 {
@@ -117,6 +117,7 @@ int main(int argc, char** argv)
     // printf("width: %i\nrescale: %f\nrheight: %i\n", WIDTH, RESCALE, RENDER_HEIGHT);
     RGBTRIPLE r1, r2, q11, q21, q12, q22;
     float or_x, or_y, tx, ty;
+    int incr_x, incr_y;
 
     // Perform interpolation
     for (int i = 0; i < RENDER_HEIGHT; i++)
@@ -125,21 +126,26 @@ int main(int argc, char** argv)
         {
             // Find where output pixel position maps to in original image by undoing scaling
             // Position of output pixel x';y' maps to position or_x;or_y on original img
-            or_x = (j + 0.5) * (1 / RESCALE), tx = or_x - (int) or_x + 0.5;
-            or_y = (i + 0.5) * (1 / RESCALE), ty = or_y - (int) or_y + 0.5;
+            or_x = (j + 0.5) * (1 / RESCALE), tx = (or_x - (int) or_x);
+            or_y = (i + 0.5) * (1 / RESCALE), ty = (or_y - (int) or_y);
             
+            incr_x = 1 ? j != RENDER_WIDTH - 1 : 0; 
+            incr_y = 1 ? i != RENDER_HEIGHT - 1 : 0; 
+
             q11 = img_arr[(int) or_y * WIDTH + (int) or_x],
-            q21 = img_arr[(int) or_y * WIDTH + (int) (or_x + 1)], 
-            q12 = img_arr[(int) (or_y + 1) * WIDTH + (int) or_x],
-            q22 = img_arr[(int) (or_y + 1) * WIDTH + (int) (or_x + 1)];
+            q21 = img_arr[(int) or_y * WIDTH + (int) (or_x + incr_x)], 
+            q12 = img_arr[(int) (or_y + incr_y) * WIDTH + (int) or_x],
+            q22 = img_arr[(int) (or_y + incr_y) * WIDTH + (int) (or_x + incr_x)];
 
             // Bilinearly interpolate to sample color
             r1 = lerp_px(q11, q21, tx);
             r2 = lerp_px(q12, q22, tx);
+            printf("LERP - horizontal r1, %f %s%i;%i;%imx | %s%i;%i;%imx%s, GOT %s%i;%i;%imx%s\n", tx, CLR, q11.rgbtRed, q11.rgbtGreen, q11.rgbtBlue, CLR, q21.rgbtRed, q21.rgbtGreen, q21.rgbtBlue, CLEAR, CLR, r1.rgbtRed, r1.rgbtGreen, r1.rgbtBlue, CLEAR);
+            printf("LERP - horizontal r2, %f %s%i;%i;%imx | %s%i;%i;%imx%s, GOT %s%i;%i;%imx%s\n", tx, CLR, q21.rgbtRed, q21.rgbtGreen, q21.rgbtBlue, CLR, q22.rgbtRed, q22.rgbtGreen, q22.rgbtBlue, CLEAR, CLR, r2.rgbtRed, r2.rgbtGreen, r2.rgbtBlue, CLEAR);
 
             // Set new pixel value
             RGBTRIPLE f = lerp_px(r1, r2, ty);
-            printf("LERP %s%i;%i;%imx | %s%i;%i;%imx%s, GOT %s%i;%i;%imx%s\n", CLR, r1.rgbtRed, r1.rgbtGreen, r1.rgbtBlue, CLR, r2.rgbtRed, r2.rgbtGreen, r2.rgbtBlue, CLEAR, CLR, f.rgbtRed, f.rgbtGreen, f.rgbtBlue, CLEAR);
+            printf("LERP - vertical, %s%i;%i;%imx | %s%i;%i;%imx%s, GOT %s%i;%i;%imx%s\n", CLR, r1.rgbtRed, r1.rgbtGreen, r1.rgbtBlue, CLR, r2.rgbtRed, r2.rgbtGreen, r2.rgbtBlue, CLEAR, CLR, f.rgbtRed, f.rgbtGreen, f.rgbtBlue, CLEAR);
             printf("SET %s%i;%i;%imx%s\n", CLR, f.rgbtRed, f.rgbtGreen, f.rgbtBlue, CLEAR);
             rescaled[i * RENDER_WIDTH + j] = f;
         }
@@ -169,7 +175,7 @@ int main(int argc, char** argv)
 }
 
 // Performs linear interpolation between x1 and x2
-float lerp(float x, int x1, int v1, int x2, int v2)
+float lerp(float x, float x1, int v1, float x2, int v2)
 {
     float t = (x-x1)/(x2-x1);
     return v1*(1-t) + v2*t;
@@ -177,12 +183,10 @@ float lerp(float x, int x1, int v1, int x2, int v2)
 
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos)
 {
-    // printf("%s%i;%i;%imPX1: %i, %i, %i\x1b[0m |||||| ", CLR, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue, px1.rgbtRed, px1.rgbtGreen, px1.rgbtBlue);
-    // printf("%s%i;%i;%imPX2: %i, %i, %i\x1b[0m\n", CLR, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue, px2.rgbtRed, px2.rgbtGreen, px2.rgbtBlue);
     return (RGBTRIPLE)
     {
-        lerp(pos, 0, px1.rgbtBlue, 2, px2.rgbtBlue),
-        lerp(pos, 0, px1.rgbtGreen, 2, px2.rgbtGreen),
-        lerp(pos, 0, px1.rgbtRed, 2, px2.rgbtRed)
+        lerp(pos, 0, px1.rgbtBlue, 1, px2.rgbtBlue),
+        lerp(pos, 0, px1.rgbtGreen, 1, px2.rgbtGreen),
+        lerp(pos, 0, px1.rgbtRed, 1, px2.rgbtRed)
     };
 }
