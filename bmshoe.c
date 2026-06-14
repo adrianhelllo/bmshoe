@@ -1,20 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "bmpspec.h"
+#include "bmconfig.h"
 
 float lerp(float x, float x1, int v1, float x2, int v2);
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos);
 
-const char SYMBOLS[] = {'.',':','-','=','+','*','#','%','@'};
 const int N = sizeof(SYMBOLS) / sizeof(SYMBOLS[0]);
-
-const char* CLR = "\x1b[48;2;";
-const char* BG = "\x1b[48;2;0;0;0m";
-const char* BOLD = "\x1b[1m";
-const char* CLEAR = "\x1b[0m";
-
-const int RENDER_WIDTH = 50;
 
 int main(int argc, char* argv[])
 {

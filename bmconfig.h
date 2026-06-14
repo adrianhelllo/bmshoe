@@ -1,5 +1,12 @@
 #include <stdint.h>
 
+const int RENDER_WIDTH = 50;
+const char SYMBOLS[] = {'.',':','-','=','+','*','#','%','@'};
+const char* CLR = "\x1b[48;2;";
+const char* BG = "\x1b[48;2;0;0;0m";
+const char* BOLD = "\x1b[1m";
+const char* CLEAR = "\x1b[0m";
+
 // The following Bitmap-specifications are adapted from Microsoft's standards
 
 typedef struct 
