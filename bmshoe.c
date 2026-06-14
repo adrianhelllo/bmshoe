@@ -14,7 +14,7 @@ const char* BG = "\x1b[48;2;0;0;0m";
 const char* BOLD = "\x1b[1m";
 const char* CLEAR = "\x1b[0m";
 
-const int RENDER_WIDTH = 130;
+const int RENDER_WIDTH = 50;
 
 int main(int argc, char* argv[])
 {
@@ -94,8 +94,6 @@ int main(int argc, char* argv[])
             fread(&cur, sizeof(RGBTRIPLE), 1, f);
             img_arr[i * WIDTH + j] = cur;
         }
-        // RGBTRIPLE cur = img_arr[i * WIDTH];
-        // printf("%s%i;%i;%imREAD %i 0 - %i, %i, %i\n", CLR, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, i, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue);
 
         // Skip padding
         fseek(f, pad, SEEK_CUR);
@@ -132,17 +130,17 @@ int main(int argc, char* argv[])
             or_x = (j + 0.5) * (1 / RESCALE), tx = (or_x - (int) or_x);
             or_y = (i + 0.5) * (1 / RESCALE), ty = (or_y - (int) or_y);
             
-            incr_x = 1 ? (int) or_x != RENDER_WIDTH - 1 : 0; 
-            incr_y = 1 ? (int) or_y != RENDER_HEIGHT - 1 : 0; 
+            incr_x = ((int) or_x != WIDTH - 1); 
+            incr_y = ((int) or_y != HEIGHT - 1);
 
             q11 = img_arr[(int) or_y * WIDTH + (int) or_x];
             q21 = img_arr[(int) or_y * WIDTH + (int) (or_x + incr_x)]; 
             q12 = img_arr[(int) (or_y + incr_y) * WIDTH + (int) or_x];
             q22 = img_arr[(int) (or_y + incr_y) * WIDTH + (int) (or_x + incr_x)];
 
-            if (i == RENDER_HEIGHT - 2)
+            if (i == RENDER_HEIGHT - 1)
             {
-                printf("ITER %i %i, origin %f, %f\n", i, j, or_x, or_y);
+                printf("ITER %i %i, origin %f, %f, incr %i, %i\n", i, j, or_x, or_y, incr_x, incr_y);
                 printf("POS - %i %i | %i %i\n", (int) or_y * WIDTH + (int) or_x,
                                                 (int) or_y * WIDTH + (int) (or_x + incr_x),
                                                 (int) (or_y + incr_y) * WIDTH + (int) or_x,
