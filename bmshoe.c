@@ -115,7 +115,6 @@ int main(int argc, char* argv[])
     }
 
     // Initialise loop variables
-    // printf("width: %i\nrescale: %f\nrheight: %i\n", WIDTH, RESCALE, RENDER_HEIGHT);
     RGBTRIPLE r1, r2, q11, q21, q12, q22;
     float or_x, or_y, tx, ty;
     int incr_x, incr_y;
@@ -138,27 +137,12 @@ int main(int argc, char* argv[])
             q12 = img_arr[(int) (or_y + incr_y) * WIDTH + (int) or_x];
             q22 = img_arr[(int) (or_y + incr_y) * WIDTH + (int) (or_x + incr_x)];
 
-            if (i == RENDER_HEIGHT - 1)
-            {
-                printf("ITER %i %i, origin %f, %f, incr %i, %i\n", i, j, or_x, or_y, incr_x, incr_y);
-                printf("POS - %i %i | %i %i\n", (int) or_y * WIDTH + (int) or_x,
-                                                (int) or_y * WIDTH + (int) (or_x + incr_x),
-                                                (int) (or_y + incr_y) * WIDTH + (int) or_x,
-                                                (int) (or_y + incr_y) * WIDTH + (int) (or_x + incr_x));
-
-            }
-
             // Bilinearly interpolate to sample color
             r1 = lerp_px(q11, q21, tx);
             r2 = lerp_px(q12, q22, tx);
-            printf("LERP - horizontal r1, %f %s%i;%i;%imx | %s%i;%i;%imx%s, GOT %s%i;%i;%imx%s\n", tx, CLR, q11.rgbtRed, q11.rgbtGreen, q11.rgbtBlue, CLR, q21.rgbtRed, q21.rgbtGreen, q21.rgbtBlue, CLEAR, CLR, r1.rgbtRed, r1.rgbtGreen, r1.rgbtBlue, CLEAR);
-            printf("LERP - horizontal r2, %f %s%i;%i;%imx | %s%i;%i;%imx%s, GOT %s%i;%i;%imx%s\n", tx, CLR, q21.rgbtRed, q21.rgbtGreen, q21.rgbtBlue, CLR, q22.rgbtRed, q22.rgbtGreen, q22.rgbtBlue, CLEAR, CLR, r2.rgbtRed, r2.rgbtGreen, r2.rgbtBlue, CLEAR);
 
             // Set new pixel value
-            RGBTRIPLE f = lerp_px(r1, r2, ty);
-            printf("LERP - vertical, %f %s%i;%i;%imx | %s%i;%i;%imx%s, GOT %s%i;%i;%imx%s\n", ty, CLR, r1.rgbtRed, r1.rgbtGreen, r1.rgbtBlue, CLR, r2.rgbtRed, r2.rgbtGreen, r2.rgbtBlue, CLEAR, CLR, f.rgbtRed, f.rgbtGreen, f.rgbtBlue, CLEAR);
-            printf("SET %s%i;%i;%imx%s\n", CLR, f.rgbtRed, f.rgbtGreen, f.rgbtBlue, CLEAR);
-            rescaled[i * RENDER_WIDTH + j] = f;
+            rescaled[i * RENDER_WIDTH + j] = lerp_px(r1, r2, ty);
         }
     }
 
@@ -169,7 +153,7 @@ int main(int argc, char* argv[])
     {
         for (int j = 0; j < RENDER_WIDTH; j++)
         {
-            cur = rescaled[(i) * RENDER_WIDTH + j]; // Image data is stored in little-endian
+            cur = rescaled[(RENDER_HEIGHT - 1 - i) * RENDER_WIDTH + j]; // Image data is stored in little-endian
             avg = (int) ((cur.rgbtRed + cur.rgbtGreen + cur.rgbtBlue) / 3);
 
             // Calculate brightness index          
@@ -182,23 +166,7 @@ int main(int argc, char* argv[])
         printf("%s\n", CLEAR);
     }
 
-    // Testing
-    for (int i = 0; i < HEIGHT; i++)
-    {
-        for (int j = 0; j < WIDTH; j++)
-        {
-            cur = img_arr[(i) * WIDTH + j]; // Image data is stored in little-endian
-            avg = (int) ((cur.rgbtRed + cur.rgbtGreen + cur.rgbtBlue)/3);
-
-            // Calculate brightness index          
-            br = (int) ((avg * N) / 256);
-            
-            // Render pixel
-            printf("%s%s%s%i;%i;%im%c ",
-                   BG, BOLD, CLR, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, SYMBOLS[br]);
-        }
-        printf("%s\n", CLEAR);
-    }
+    // Image rendering was successful
     fclose(f);
     return 0;
 }
@@ -210,6 +178,7 @@ float lerp(float x, float x1, int v1, float x2, int v2)
     return v1*(1-t) + v2*t;
 }
 
+// Linearly interpolates two input pixels
 RGBTRIPLE lerp_px(RGBTRIPLE px1, RGBTRIPLE px2, float pos)
 {
     return (RGBTRIPLE)
