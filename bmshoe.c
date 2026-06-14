@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "bmpspec.h"
 
 float lerp(float x, float x1, int v1, float x2, int v2);
@@ -15,7 +16,7 @@ const char* CLEAR = "\x1b[0m";
 
 const int RENDER_WIDTH = 130;
 
-int main(int argc, char** argv)
+int main(int argc, char* argv[])
 {
     // Ensure correct usage
     if (argc != 2)
@@ -75,7 +76,7 @@ int main(int argc, char** argv)
     }
 
     // Initialise array for image
-    const int HEIGHT = bmp_ihead.biHeight;
+    const int HEIGHT = abs(bmp_ihead.biHeight);
     const int WIDTH = bmp_ihead.biWidth;
     RGBTRIPLE img_arr[HEIGHT * WIDTH];
 
@@ -101,7 +102,9 @@ int main(int argc, char** argv)
     }
 
     // Rescale image content
-    const float RESCALE = RENDER_WIDTH / (float) WIDTH;
+
+    // Initialise array for storing rescaled image
+    const float RESCALE = (float) RENDER_WIDTH / (float) WIDTH;
     const int RENDER_HEIGHT = (int) (HEIGHT * RESCALE);
     RGBTRIPLE rescaled[RENDER_WIDTH * RENDER_HEIGHT];
 
@@ -129,13 +132,23 @@ int main(int argc, char** argv)
             or_x = (j + 0.5) * (1 / RESCALE), tx = (or_x - (int) or_x);
             or_y = (i + 0.5) * (1 / RESCALE), ty = (or_y - (int) or_y);
             
-            incr_x = 1 ? j != RENDER_WIDTH - 1 : 0; 
-            incr_y = 1 ? i != RENDER_HEIGHT - 1 : 0; 
+            incr_x = 1 ? (int) or_x != RENDER_WIDTH - 1 : 0; 
+            incr_y = 1 ? (int) or_y != RENDER_HEIGHT - 1 : 0; 
 
-            q11 = img_arr[(int) or_y * WIDTH + (int) or_x],
-            q21 = img_arr[(int) or_y * WIDTH + (int) (or_x + incr_x)], 
-            q12 = img_arr[(int) (or_y + incr_y) * WIDTH + (int) or_x],
+            q11 = img_arr[(int) or_y * WIDTH + (int) or_x];
+            q21 = img_arr[(int) or_y * WIDTH + (int) (or_x + incr_x)]; 
+            q12 = img_arr[(int) (or_y + incr_y) * WIDTH + (int) or_x];
             q22 = img_arr[(int) (or_y + incr_y) * WIDTH + (int) (or_x + incr_x)];
+
+            if (i == RENDER_HEIGHT - 2)
+            {
+                printf("ITER %i %i, origin %f, %f\n", i, j, or_x, or_y);
+                printf("POS - %i %i | %i %i\n", (int) or_y * WIDTH + (int) or_x,
+                                                (int) or_y * WIDTH + (int) (or_x + incr_x),
+                                                (int) (or_y + incr_y) * WIDTH + (int) or_x,
+                                                (int) (or_y + incr_y) * WIDTH + (int) (or_x + incr_x));
+
+            }
 
             // Bilinearly interpolate to sample color
             r1 = lerp_px(q11, q21, tx);
@@ -145,7 +158,7 @@ int main(int argc, char** argv)
 
             // Set new pixel value
             RGBTRIPLE f = lerp_px(r1, r2, ty);
-            printf("LERP - vertical, %s%i;%i;%imx | %s%i;%i;%imx%s, GOT %s%i;%i;%imx%s\n", CLR, r1.rgbtRed, r1.rgbtGreen, r1.rgbtBlue, CLR, r2.rgbtRed, r2.rgbtGreen, r2.rgbtBlue, CLEAR, CLR, f.rgbtRed, f.rgbtGreen, f.rgbtBlue, CLEAR);
+            printf("LERP - vertical, %f %s%i;%i;%imx | %s%i;%i;%imx%s, GOT %s%i;%i;%imx%s\n", ty, CLR, r1.rgbtRed, r1.rgbtGreen, r1.rgbtBlue, CLR, r2.rgbtRed, r2.rgbtGreen, r2.rgbtBlue, CLEAR, CLR, f.rgbtRed, f.rgbtGreen, f.rgbtBlue, CLEAR);
             printf("SET %s%i;%i;%imx%s\n", CLR, f.rgbtRed, f.rgbtGreen, f.rgbtBlue, CLEAR);
             rescaled[i * RENDER_WIDTH + j] = f;
         }
@@ -158,7 +171,25 @@ int main(int argc, char** argv)
     {
         for (int j = 0; j < RENDER_WIDTH; j++)
         {
-            cur = rescaled[(RENDER_HEIGHT - i) * RENDER_WIDTH + j]; // Image data is stored in little-endian
+            cur = rescaled[(i) * RENDER_WIDTH + j]; // Image data is stored in little-endian
+            avg = (int) ((cur.rgbtRed + cur.rgbtGreen + cur.rgbtBlue) / 3);
+
+            // Calculate brightness index          
+            br = (int) ((avg * N) / 256);
+            
+            // Render pixel
+            printf("%s%s%s%i;%i;%im%c ",
+                   BG, BOLD, CLR, cur.rgbtRed, cur.rgbtGreen, cur.rgbtBlue, SYMBOLS[br]);
+        }
+        printf("%s\n", CLEAR);
+    }
+
+    // Testing
+    for (int i = 0; i < HEIGHT; i++)
+    {
+        for (int j = 0; j < WIDTH; j++)
+        {
+            cur = img_arr[(i) * WIDTH + j]; // Image data is stored in little-endian
             avg = (int) ((cur.rgbtRed + cur.rgbtGreen + cur.rgbtBlue)/3);
 
             // Calculate brightness index          
