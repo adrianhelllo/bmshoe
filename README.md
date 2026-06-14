@@ -12,4 +12,4 @@ For invalid use cases, an error message and code will be given.
 
 ## Configuration
 
-Configuration variables can be found atop the bmshoe.c file.
+Configuration variables can be found atop the bmconfig.h header file.
